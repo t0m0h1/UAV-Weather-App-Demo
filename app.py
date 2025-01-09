@@ -37,11 +37,12 @@ def get_weather():
     }
     
     # Add fly/no-fly decision logic
-    if weather_info['wind_speed'] > 10 or weather_info['visibility'] < 5000:
+    if weather_info['wind_speed'] > 10 or weather_info['visibility'] < 5000 or weather_info['temperature'] < 0:
         weather_info['flyable'] = False
-        weather_info['reason'] = 'High wind speed or low visibility'
+        weather_info['reason'] = 'High wind speed, low visibility, or freezing temperature'
     else:
         weather_info['flyable'] = True
+    
     
     return jsonify(weather_info)
 
