@@ -4,8 +4,7 @@ import requests
 app = Flask(__name__)
 
 # Weather API Configuration
-
-API_KEY = 'dbb1f03d6f0d9651b3d9ffd9b82caea6' # My API key
+API_KEY = 'dbb1f03d6f0d9651b3d9ffd9b82caea6'  # Retain hardcoded API key
 BASE_URL = 'https://api.openweathermap.org/data/2.5/weather'
 
 
@@ -22,24 +21,30 @@ def get_weather():
     # Fetch weather data
     params = {'q': location, 'appid': API_KEY, 'units': 'metric'}
     response = requests.get(BASE_URL, params=params)
+    
+    if response.status_code != 200:
+        data = response.json()
+        return jsonify({'error': 'Failed to fetch weather data', 'details': data.get('message', 'Unknown error')}), 400
+    
     data = response.json()
     
     # Extract drone-relevant data
     weather_info = {
         'temperature': data['main']['temp'],
         'wind_speed': data['wind']['speed'],
-        'visibility': data['visibility'],
+        'visibility': data.get('visibility', 10000),  # Default visibility to 10,000 meters if missing
         'conditions': data['weather'][0]['description'],
     }
     
     # Add fly/no-fly decision logic
-    if weather_info['wind_speed'] > 10:  # Example: limit wind speed to 10 m/s
+    if weather_info['wind_speed'] > 10 or weather_info['visibility'] < 5000:
         weather_info['flyable'] = False
-        weather_info['reason'] = 'High wind speed'
+        weather_info['reason'] = 'High wind speed or low visibility'
     else:
         weather_info['flyable'] = True
     
     return jsonify(weather_info)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
