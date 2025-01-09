@@ -1,12 +1,17 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 import requests
 
 app = Flask(__name__)
 
 # Weather API Configuration
 
-API_KEY = '' # My API key
+API_KEY = 'dbb1f03d6f0d9651b3d9ffd9b82caea6' # My API key
 BASE_URL = 'https://api.openweathermap.org/data/2.5/weather'
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 
 @app.route('/weather', methods=['GET'])
