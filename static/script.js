@@ -1,5 +1,8 @@
 async function fetchWeather() {
     const location = document.getElementById('location').value;
+    const resultDiv = document.getElementById('result');
+    resultDiv.innerHTML = ""; // Clear previous results
+
     try {
         const response = await fetch(`http://127.0.0.1:5000/weather?location=${location}`);
         if (!response.ok) {
@@ -7,7 +10,7 @@ async function fetchWeather() {
         }
         const data = await response.json();
 
-        const resultDiv = document.getElementById('result');
+        // Display weather information
         resultDiv.innerHTML = `
             <h3>Weather in ${location}</h3>
             <p>Temperature: ${data.temperature}°C</p>
@@ -16,9 +19,13 @@ async function fetchWeather() {
             <p>Conditions: ${data.conditions}</p>
             <p>Flyable: ${data.flyable ? 'Yes' : 'No'}</p>
             ${!data.flyable ? `<p>Reason: ${data.reason}</p>` : ''}
+            <img src="${data.icon_url}" alt="Weather icon">
         `;
     } catch (error) {
         console.error(error);
-        // Handle error here
+        // Handle error and display message
+        resultDiv.innerHTML = `
+            <p style="color: red;">Error: ${error.message}</p>
+        `;
     }
 }
