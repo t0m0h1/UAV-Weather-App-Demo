@@ -27,12 +27,13 @@ form {
     padding: 25px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    width: 100%;
-    max-width: 450px;
+    width: 90%;
+    max-width: 600px;
     text-align: center;
     display: flex;
     flex-direction: column;
     gap: 15px;
+    margin: 0 auto;
 }
 
 label {
