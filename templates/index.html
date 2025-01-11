@@ -6,11 +6,10 @@
     <title>Drone Weather Checker</title>
     <link rel="stylesheet" href="static/style.css">
     <script>
-        async function fetchWeather() {
-            const location = document.getElementById('location').value;
+        async function fetchWeather(location) {
             const response = await fetch(`/weather?location=${location}`);
             const data = await response.json();
-            
+
             if (data.error) {
                 document.getElementById('result').innerHTML = `<p>Error: ${data.error} (${data.details})</p>`;
             } else {
@@ -25,14 +24,40 @@
                 `;
             }
         }
+
+        function useGeolocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by your browser.');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const location = `${latitude},${longitude}`;
+                    document.getElementById('location').value = location;
+                    await fetchWeather(location);
+                },
+                (error) => {
+                    alert('Unable to retrieve your location. Please enter it manually.');
+                }
+            );
+        }
+
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+            const location = document.getElementById('location').value;
+            await fetchWeather(location);
+        }
     </script>
 </head>
 <body>
     <h1>Drone Weather Checker</h1>
-    <form onsubmit="fetchWeather(); return false;">
+    <form onsubmit="handleFormSubmit(event);">
         <label for="location">Enter location:</label>
-        <input type="text" id="location" name="location" required>
+        <input type="text" id="location" name="location" placeholder="City or Coordinates" required>
         <button type="submit">Check Weather</button>
+        <button type="button" onclick="useGeolocation()">Use My Location</button>
     </form>
     <div id="result"></div>
 </body>
