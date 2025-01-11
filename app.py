@@ -42,13 +42,28 @@ def get_weather():
         'icon_url': f"http://openweathermap.org/img/wn/{data['weather'][0]['icon']}@2x.png"
     }
 
-    if weather_info['wind_speed'] > 10 or weather_info['visibility'] < 5000 or weather_info['temperature'] < 0:
+    if weather_info['wind_speed'] > 10:
         weather_info['flyable'] = False
         weather_info['reason'] = 'High wind speed, low visibility, or freezing temperature'
+
+    elif weather_info['conditions'] in ['Snow']:
+        weather_info['flyable'] = False
+        weather_info['reason'] = 'Snow Forecast in this area'
+
+    elif weather_info['visibility'] < 5000:
+        weather_info['flyable'] = False
+        weather_info['reason'] = 'Low visibility'
+
+    elif weather_info['temperature'] < 0:
+        weather_info['flyable'] = False
+        weather_info['reason'] = 'Freezing temperature'
+
     else:
         weather_info['flyable'] = True
 
     return jsonify(weather_info)
 
+
+# Driver code
 if __name__ == '__main__':
     app.run(debug=True)
