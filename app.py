@@ -1,18 +1,24 @@
-
-
 import json
 from flask import Flask, jsonify, request, render_template
 import requests
 
-# Load API key from config.json
-def load_api_key():
-    with open('keys.json') as config_file:
-        config = json.load(config_file)
-    return config['API_KEY']
+# Load API key from keys.json
+def load_api_key(file_path='keys.json'):
+    try:
+        with open(file_path) as config_file:
+            config = json.load(config_file)
+        return config.get('API_KEY')
+    except (FileNotFoundError, KeyError) as e:
+        raise RuntimeError(f"Failed to load API key: {e}")
 
 app = Flask(__name__)
 
-API_KEY = load_api_key()  # Load the API key
+try:
+    API_KEY = load_api_key()  # Load the API key
+except RuntimeError as e:
+    print(e)
+    API_KEY = None
+
 BASE_URL = 'https://api.openweathermap.org/data/2.5/weather'
 
 @app.route('/')
@@ -23,14 +29,20 @@ def index():
 def get_weather():
     location = request.args.get('location', default='New York')
 
-    if not location.isalpha():  # Validate the location input
-        return jsonify({'error': 'Invalid location'}), 400
+    # Validate the location input
+    if not location.isalpha():
+        return jsonify({'error': 'Invalid location. Only alphabetic characters are allowed.'}), 400
+
+    if not API_KEY:
+        return jsonify({'error': 'API key not available. Please check your configuration.'}), 500
 
     params = {'q': location, 'appid': API_KEY, 'units': 'metric'}
-    response = requests.get(BASE_URL, params=params)
 
-    if response.status_code != 200:
-        return jsonify({'error': 'Failed to fetch weather data', 'details': response.json().get('message', 'Unknown error')}), response.status_code
+    try:
+        response = requests.get(BASE_URL, params=params)
+        response.raise_for_status()  # Raise HTTPError for bad responses (4xx and 5xx)
+    except requests.exceptions.RequestException as e:
+        return jsonify({'error': 'Failed to fetch weather data', 'details': str(e)}), 500
 
     data = response.json()
 
@@ -42,28 +54,21 @@ def get_weather():
         'icon_url': f"http://openweathermap.org/img/wn/{data['weather'][0]['icon']}@2x.png"
     }
 
+    # Determine flyability
     if weather_info['wind_speed'] > 10:
-        weather_info['flyable'] = False
-        weather_info['reason'] = 'High wind speed, low visibility, or freezing temperature'
-
-    elif weather_info['conditions'] in ['Snow']:
-        weather_info['flyable'] = False
-        weather_info['reason'] = 'Snow Forecast in this area'
-
+        weather_info.update({'flyable': False, 'reason': 'High wind speed'})
+    elif 'snow' in weather_info['conditions'].lower():
+        weather_info.update({'flyable': False, 'reason': 'Snow forecast in this area'})
     elif weather_info['visibility'] < 5000:
-        weather_info['flyable'] = False
-        weather_info['reason'] = 'Low visibility'
-
+        weather_info.update({'flyable': False, 'reason': 'Low visibility'})
     elif weather_info['temperature'] < 0:
-        weather_info['flyable'] = False
-        weather_info['reason'] = 'Freezing temperature'
-
+        weather_info.update({'flyable': False, 'reason': 'Freezing temperature'})
     else:
-        weather_info['flyable'] = True
+        weather_info.update({'flyable': True, 'reason': 'Weather conditions are suitable for flying'})
 
     return jsonify(weather_info)
-
 
 # Driver code
 if __name__ == '__main__':
     app.run(debug=True)
+
