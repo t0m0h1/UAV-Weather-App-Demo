@@ -149,3 +149,12 @@ button[type="button"]:hover {
         font-size: 1rem;
     }
 }
+/* BEGIN: Additional Styles */
+form {
+    gap: 10px;
+}
+
+button {
+    margin-top: 10px;
+}
+/* END: Additional Styles */
